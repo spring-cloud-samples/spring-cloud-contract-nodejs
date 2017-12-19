@@ -1,0 +1,119 @@
+// running node so that it runs in background
+import com.example.ExecWait
+// docker
+import com.bmuschko.gradle.docker.tasks.container.*
+import com.bmuschko.gradle.docker.tasks.image.*
+
+buildscript {
+	repositories {
+		mavenCentral()
+		// for nodejs integration
+		maven { url "https://plugins.gradle.org/m2/" }
+	}
+
+	dependencies {
+		// spring cloud contract
+		classpath "org.springframework.boot:spring-boot-gradle-plugin:${bootVersion}"
+		classpath "org.springframework.cloud:spring-cloud-contract-gradle-plugin:${findProperty('verifierVersion')}"
+		// nodejs
+		classpath "com.moowork.gradle:gradle-node-plugin:1.2.0"
+		// docker
+		classpath 'com.bmuschko:gradle-docker-plugin:3.0.11'
+	}
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+repositories {
+	mavenCentral()
+}
+
+// spring cloud contract
+apply plugin: 'groovy'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'spring-cloud-contract'
+apply plugin: 'maven-publish'
+// nodejs
+apply plugin: "com.moowork.node"
+// docker
+apply plugin: 'com.bmuschko.docker-remote-api'
+
+// tests
+bootRepackage.enabled = false
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${bomVersion}"
+	}
+}
+
+dependencies {
+	testCompile("org.springframework.cloud:spring-cloud-stream-test-support")
+	testCompile("org.springframework.cloud:spring-cloud-starter-contract-verifier")
+}
+
+test {
+	testLogging {
+		exceptionFormat = 'full'
+	}
+}
+
+// tests - contracts
+contracts {
+	packageWithBaseClasses = 'com.example'
+	testMode = "EXPLICIT"
+}
+
+task startApp(type: ExecWait) {
+	command 'node app'
+	ready 'Running on port'
+	directory '.'
+}
+
+task freeAllPorts() {
+	doLast {
+		def ports = [3000]
+		logger.info("Closing all apps running on ports ${ports}")
+		ports.each { port ->
+			def cmd = "lsof -Fp -i :$port"
+			def process = cmd.execute()
+			process.in.eachLine { line ->
+				def killProcess = "kill -9 ${ line.substring(1) }".execute()
+				killProcess.waitFor()
+			}
+		}
+	}
+}
+
+// docker
+task pullDBContainer(type: DockerPullImage) {
+	repository = "mongo"
+	tag = "jessie"
+}
+
+task createDBContainer(type: DockerCreateContainer) {
+	dependsOn pullDBContainer
+	targetImageId { 'mongo:jessie' }
+	portBindings = ['27017:27017']
+}
+
+task startDBContainer(type: DockerStartContainer) {
+	dependsOn createDBContainer
+	targetContainerId { createDBContainer.getContainerId() }
+}
+
+task stopDBContainer(type: DockerStopContainer) {
+	targetContainerId { createDBContainer.getContainerId() }
+}
+
+// tests
+test.dependsOn("npmInstall", "startDBContainer", "startApp")
+test.finalizedBy("freeAllPorts", "stopDBContainer")
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '4.3.1'
+}
+
+clean.delete << file('node_modules')
