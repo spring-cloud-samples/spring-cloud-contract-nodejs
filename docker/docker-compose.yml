@@ -1,0 +1,11 @@
+version: "2"
+services:
+  mongo:
+    image: mongo:jessie
+    ports: ["27017:27017"]
+  artifactory:
+    build:
+      context: .
+      dockerfile: Dockerfile-artifactory
+    ports:
+      - "8081:8081"
