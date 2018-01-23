@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-1.2.3.BUILD-SNAPSHOT}"
 APP_IP="$( ./whats_my_ip.sh )"
 APP_PORT="${APP_PORT:-3000}"
 ARTIFACTORY_PORT="${ARTIFACTORY_PORT:-8081}"
@@ -9,8 +10,9 @@ CURRENT_DIR="$( pwd )"
 CURRENT_FOLDER_NAME=${PWD##*/}
 PROJECT_VERSION="${PROJECT_VERSION:-0.0.1.RELEASE}"
 
+echo "Sc Contract Version [${SC_CONTRACT_DOCKER_VERSION}]"
 echo "Application URL [${APPLICATION_BASE_URL}]"
 echo "Artifactory URL [${ARTIFACTORY_URL}]"
 echo "Project Version [${PROJECT_VERSION}]"
 
-docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" -e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${CURRENT_FOLDER_NAME}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" -e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" -v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" spring-cloud-contract-docker:latest
+docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" -e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${CURRENT_FOLDER_NAME}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" -e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" -v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" spring-cloud/spring-cloud-contract:"${SC_CONTRACT_DOCKER_VERSION}"
