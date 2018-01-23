@@ -1,3 +1,0 @@
-[submodule "stub-runner-boot"]
-	path = stub-runner-boot
-	url = git@github.com:spring-cloud-samples/stub-runner-boot.git
