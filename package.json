@@ -4,7 +4,7 @@
   "description": "Simple bookstore app",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./run_tests.sh"
   },
   "dependencies": {
     "express": "*",
