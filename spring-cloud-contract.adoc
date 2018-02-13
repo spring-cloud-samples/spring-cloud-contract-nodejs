@@ -273,8 +273,8 @@ $ export ARTIFACTORY_PORT="8081"
 $ export APPLICATION_BASE_URL="http://${APP_IP}:${APP_PORT}"
 $ export ARTIFACTORY_URL="http://${APP_IP}:${ARTIFACTORY_PORT}/artifactory/libs-release-local"
 $ export CURRENT_DIR="$( pwd )"
-$ export PROJECT_NAME="${PROJECT_NAME:-bookstore}"
-$ export PROJECT_GROUP="${PROJECT_GROUP:-com.example}"
+$ export PROJECT_NAME="bookstore"
+$ export PROJECT_GROUP="com.example"
 $ export PROJECT_VERSION="0.0.1.RELEASE"
 
 # Execute contract tests
