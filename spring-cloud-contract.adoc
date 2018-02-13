@@ -162,7 +162,7 @@ Let's clone the simple NodeJS MVC application, as follows:
 
 ```bash
 $ git clone https://github.com/spring-cloud-samples/spring-cloud-contract-nodejs
-$ cd bookstore
+$ cd spring-cloud-contract-nodejs
 ```
 
 It connects to a Mongo DB database to store data about books.
