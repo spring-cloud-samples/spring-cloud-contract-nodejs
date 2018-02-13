@@ -13,9 +13,9 @@ Just clone or download and run **npm install** and then **node app** to start
 ##Notes##
 The Genres Angular controller is blank on purpose. This is for you to try and come up with after watching the video. It may be added in the future
 
-## SPRING CLOUD CONTRACT ##
+# SPRING CLOUD CONTRACT #
 
 Just run `npm test` to execute contract tests and publish the jars to artifactory.
 Requires Docker and Docker Compose!
 
-You can read more spring-cloud-contract.adoc[here]
+Click [here](spring-cloud-contract.adoc) to read an article contains a short reminder of what Contract Testing is, how Spring Cloud Contract implements it, and how Spring Cloud Contract can be used in a polyglot world.
