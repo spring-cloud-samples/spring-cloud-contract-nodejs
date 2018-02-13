@@ -279,11 +279,11 @@ $ export PROJECT_VERSION="0.0.1.RELEASE"
 
 # Execute contract tests
 $ docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" \
-  -e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${PROJECT_NAME}" \
-  -e "PROJECT_GROUP=${PROJECT_GROUP}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" \
-  -e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" \
-  -v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" \
-  springcloud/spring-cloud-contract:"${SC_CONTRACT_DOCKER_VERSION}"
+-e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${PROJECT_NAME}" \
+-e "PROJECT_GROUP=${PROJECT_GROUP}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" \
+-e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" \
+-v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" \
+springcloud/spring-cloud-contract:"${SC_CONTRACT_DOCKER_VERSION}"
 
 # Kill app
 $ pkill -f "node app"
@@ -327,9 +327,9 @@ $ export STUBRUNNER_IDS="com.example:bookstore:0.0.1.RELEASE:stubs:9876"
 $ export STUBRUNNER_REPOSITORY_ROOT="http://${APP_IP}:8081/artifactory/libs-release-local"
 # Run the docker with Stub Runner Boot
 $ docker run  --rm -e "STUBRUNNER_IDS=${STUBRUNNER_IDS}" \
-  -e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" \
-  -p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" -p "9876:9876" \
-  springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
+-e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" \
+-p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" -p "9876:9876" \
+springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
 ```
 
 That script:
@@ -345,7 +345,7 @@ On the server side, we built a stateful stub. Let's use curl to assert that the 
 ```bash
 # let's execute the first request (no response is returned)
 $ curl -H "Content-Type:application/json" -X POST \
-  --data '{ "title" : "Title", "genre" : "Genre", "description" : "Description", "author" : "Author", "publisher" : "Publisher", "pages" : 100, "image_url" : "https://d213dhlpdb53mu.cloudfront.net/assets/pivotal-square-logo-41418bd391196c3022f3cd9f3959b3f6d7764c47873d858583384e759c7db435.svg", "buy_url" : "https://pivotal.io" }' http://localhost:9876/api/books
+--data '{ "title" : "Title", "genre" : "Genre", "description" : "Description", "author" : "Author", "publisher" : "Publisher", "pages" : 100, "image_url" : "https://d213dhlpdb53mu.cloudfront.net/assets/pivotal-square-logo-41418bd391196c3022f3cd9f3959b3f6d7764c47873d858583384e759c7db435.svg", "buy_url" : "https://pivotal.io" }' http://localhost:9876/api/books
 # Now it's time for the second request
 $ curl -X GET http://localhost:9876/api/books
 # You should receive the contents of the JSON
