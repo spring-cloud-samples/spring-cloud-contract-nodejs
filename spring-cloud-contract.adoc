@@ -170,12 +170,8 @@ It connects to a Mongo DB database to store data about books.
 The YAML contracts are available under the `/contracts` folder, as follows:
 
 ```bash
-$  ls -al contracts
-total 16
-drwxr-xr-x   4 mgrzejszczak  staff  128 Feb 13 12:51 .
-drwxr-xr-x  20 mgrzejszczak  staff  640 Feb 13 12:51 ..
--rw-r--r--   1 mgrzejszczak  staff  511 Feb 13 12:51 1_shouldAddABook.yml
--rw-r--r--   1 mgrzejszczak  staff  627 Feb 13 12:51 2_shouldReturnListOfBooks.yml
+$ ls contracts
+1_shouldAddABook.yml          2_shouldReturnListOfBooks.yml
 ```
 
 The numerical suffixes tell Spring Cloud Contract that the tests generated from these contracts need to be executed sequentially. The stubs are stateful, meaning that, only after performing a request matched by `1_shouldAddABook` is the `2_shouldReturnListOfBooks.yml` be available from the stubbed HTTP server.
@@ -245,18 +241,24 @@ Remember that it has to be accessible from the Docker container (`localhost` doe
 
 = Running Spring Cloud Contract tests on the Producer Side
 
+IMPORTANT: To run this sample you need to have https://www.docker.com[Docker], https://docs.docker.com/compose/[Docker Compose] and https://docs.npmjs.com/cli/install[npm] installed.
+
 Since we want to run tests, we could use:
 
 ```bash
+$ npm install
 $ npm test
 ```
 
-However, for learning purposes, let's split it into pieces, as follows:
+However, for learning purposes, let's split it into pieces, as follows (we're going to analyze each line of a bash script):
 
 ```bash
-# Stop docker infra (nodejs, artifactory)
+# Install the required npm packages
+$ npm install
+
+# Stop docker infra (mongodb, artifactory)
 $ ./stop_infra.sh
-# Start docker infra (nodejs, artifactory)
+# Start docker infra (mongodb, artifactory)
 $ ./setup_infra.sh
 
 # Kill & Run app
@@ -264,18 +266,19 @@ $ pkill -f "node app"
 $ nohup node app &
 
 # Prepare environment variables
-$ SC_CONTRACT_DOCKER_VERSION="1.2.3.RELEASE"
-$ APP_IP="192.168.0.100" # This has to be the IP that is available outside of Docker container
-$ APP_PORT="3000"
-$ ARTIFACTORY_PORT="8081"
-$ APPLICATION_BASE_URL="http://${APP_IP}:${APP_PORT}"
-$ ARTIFACTORY_URL="http://${APP_IP}:${ARTIFACTORY_PORT}/artifactory/libs-release-local"
-$ CURRENT_DIR="$( pwd )"
-$ CURRENT_FOLDER_NAME=${PWD##*/}
-$ PROJECT_VERSION="0.0.1.RELEASE"
+$ export SC_CONTRACT_DOCKER_VERSION="1.2.3.RELEASE"
+$ export APP_IP="192.168.0.100" # This has to be the IP that is available outside of Docker container
+$ export APP_PORT="3000"
+$ export ARTIFACTORY_PORT="8081"
+$ export APPLICATION_BASE_URL="http://${APP_IP}:${APP_PORT}"
+$ export ARTIFACTORY_URL="http://${APP_IP}:${ARTIFACTORY_PORT}/artifactory/libs-release-local"
+$ export CURRENT_DIR="$( pwd )"
+$ export PROJECT_NAME="${PROJECT_NAME:-bookstore}"
+$ export PROJECT_GROUP="${PROJECT_GROUP:-com.example}"
+$ export PROJECT_VERSION="0.0.1.RELEASE"
 
 # Execute contract tests
-$ docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" -e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${CURRENT_FOLDER_NAME}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" -e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" -v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" springcloud/spring-cloud-contract:"${SC_CONTRACT_DOCKER_VERSION}"
+$ docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" -e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${PROJECT_NAME}" -e "PROJECT_GROUP=${PROJECT_GROUP}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" -e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" -v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" springcloud/spring-cloud-contract:"${SC_CONTRACT_DOCKER_VERSION}"
 
 # Kill app
 $ pkill -f "node app"
@@ -309,14 +312,14 @@ Let's assume that we want to run the stubs of the bookstore application on port 
 
 ```bash
 # Provide the Spring Cloud Contract Docker version
-$ SC_CONTRACT_DOCKER_VERSION="1.2.3.RELEASE"
+$ export SC_CONTRACT_DOCKER_VERSION="1.2.3.RELEASE"
 # The IP at which the app is running and the Docker container can reach it
-$ APP_IP="192.168.0.100"
+$ export APP_IP="192.168.0.100"
 # Spring Cloud Contract Stub Runner properties
-$ STUBRUNNER_PORT="8083"
+$ export STUBRUNNER_PORT="8083"
 # Stub coordinates 'groupId:artifactId:version:classifier:port'
-$ STUBRUNNER_IDS="com.example:bookstore:0.0.1.RELEASE:stubs:9876"
-$ STUBRUNNER_REPOSITORY_ROOT="http://${APP_IP}:8081/artifactory/libs-release-local"
+$ export STUBRUNNER_IDS="com.example:bookstore:0.0.1.RELEASE:stubs:9876"
+$ export STUBRUNNER_REPOSITORY_ROOT="http://${APP_IP}:8081/artifactory/libs-release-local"
 # Run the docker with Stub Runner Boot
 $ docker run  --rm -e "STUBRUNNER_IDS=${STUBRUNNER_IDS}" -e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" -p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" -p "9876:9876" springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
 ```

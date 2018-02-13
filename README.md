@@ -17,3 +17,5 @@ The Genres Angular controller is blank on purpose. This is for you to try and co
 
 Just run `npm test` to execute contract tests and publish the jars to artifactory.
 Requires Docker and Docker Compose!
+
+You can read more spring-cloud-contract.adoc[here]
