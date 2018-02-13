@@ -1,23 +1,23 @@
-This article will contain a short reminder of what Contract Testing is, how Spring Cloud Contract implements it and how Spring Cloud Contract can be used in a polyglot world.
+This article contains a short reminder of what Contract Testing is, how Spring Cloud Contract implements it, and how Spring Cloud Contract can be used in a polyglot world.
 
 = What is Contract Testing
 
-In order to increase the certainty that our system behaves properly, we write different types of tests. According to the https://martinfowler.com/bliki/TestPyramid.html[test pyramid] the main types of tests are unit, integration and UI tests. The more complex the tests are, the more time and effort they require and the more brittle they become.
+In order to increase the certainty that our systems behave properly, we write different types of tests. According to the https://martinfowler.com/bliki/TestPyramid.html[test pyramid] the main types of tests are unit, integration, and UI. The more complex the tests, the more time and effort they require and the more brittle they become.
 
-In a distributed system, one of the most frequent problems is testing integrations between applications. Let's assume that your service is sending a REST request to another application. When using Spring Boot, you can write a `@SpringBootTest` where you will test that behaviour. You set up a Spring context, you prepare a request to be sent... and where do you send it? You haven't started the other application, so you will get a `Connection Refused` exception. What you can do is mock the real HTTP call and return a fake response. However, if you do that, you will not test any real HTTP integration, serialization and deserialization mechanisms etc. You could also start a fake HTTP server (for example http://wiremock.org[WireMock]) and simulate how it should behave. The problem faced here is that you as a client of an API define how the server behaves. In other words, if you tell the fake server to return text `bar` when a request is sent to endpoint `/foo`, then it will do just that. Even if the real server doesn't have such an endpoint. So the problem here is that the stubs might not be reliable.
+In a distributed system, one of the most frequent problems is testing integrations between applications. Let's assume that your service sends a REST request to another application. When using Spring Boot, you can write a `@SpringBootTest` in which you test that behavior. You set up a Spring context, you prepare a request to be sent... and where do you send it? You haven't started the other application, so you get a `Connection Refused` exception. You can try mocking the real HTTP call and returning a fake response. However, if you do that, you do not test any real HTTP integration, serialization and deserialization mechanisms, and so on. You could also start a fake HTTP server (for example, http://wiremock.org[WireMock]) and simulate how it should behave. The problem here is that you, as a client of an API, define how the server behaves. In other words, if you tell the fake server to return text `testText` when a request is sent to endpoint `/myEndpoint`, it does just that, even if the real server does not have such an endpoint. In short, the problem is that the stubs might not be reliable.
 
-Another problem is integration with 3rd party systems. There are cases where there's a shared instance that breaks down every 5 minutes due to high load. In that situation we would like to stub that system out so it doesn't influence our integration tests but we need those stubs to be reliable.
+Another problem is integration with third-party systems. There may be a shared instance that breaks down every 5 minutes due to high load. In that situation we would like to stub that system out so that it doesn't influence our integration tests, but we need those stubs to be reliable.
 
-It's always tempting to set up an environment for end to end tests, where we will spawn all applications and perform tests running though the whole system. Often, that's a good solution that will increase the confidence that your business features are still working fine. However, often the problem with end to end tests is that they fail for no apparent reason and are very slow. There is nothing more frustrating then seeing that, after running for 10 hours, the end to end tests have failed due to a typo in the API call.
+It's always tempting to set up an environment for end-to-end tests, spawn all applications, and perform tests by running though the whole system. Often, that's a good solution that increases the confidence that your business features are still working fine. However, the problem with end-to-end tests is that they often fail for no apparent reason and are very slow. There is nothing more frustrating than seeing that, after running for ten hours, the end-to-end tests have failed due to a typo in the API call.
 
 A potential solution to this problem are Contract Tests. Before we go into details of what those are, let's define some terms:
 
-- *producer* - is the server-side owner, e.g. the owner of a HTTP API, or a producer of a message sent via a queue, e.g. RabbitMQ
-- *consumer* - is the application that consumes the HTTP API or listens to messages received via e.g. RabbitMQ
-- *contract* - is an agreement between the producer and the consumer on how the communication should look like. **It's not a schema**. It's more of a scenario of usage. E.g. for this particular scenario, I need such input and then I'll reply with such output.
-- *contract test* - is a test that verifies that the producer and the consumer will be able to integrate with each other. **It doesn't mean that the functionality will work fine**. This distinction is important because you wouldn't want to duplicate your work by writing a contract per each feature. Contract tests assert that producer and the consumer integration meet the requirements defined in the contract. Their main advantage is that they are fast and reliable.
+*producer*: The server-side owner (for example, the owner of a HTTP API) or a producer of a message sent through a queue, such as RabbitMQ.
+*consumer*: The application that consumes the HTTP API or listens to messages received through (for example) RabbitMQ.
+*contract*: An agreement between the producer and the consumer on what the communication should look like. **It is not a schema**. It is more of a scenario of usage. For example, for this particular scenario, I expect a specified input and then I reply with a specified output.
+*contract test*: A test that verifies that the producer and the consumer can integrate with each other. **It does not mean that the functionality works**. This distinction is important, because you would not want to duplicate your work by writing a contract for each feature. Contract tests assert that the integration between the producer and the consumer meets the requirements defined in the contract. Their main advantage is that they are fast and reliable.
 
-Example of a contract written in YAML:
+The following example shows a contract written in YAML:
 
 ```yml
 request: # (1)
@@ -42,131 +42,132 @@ response: # (7)
     Content-Type: application/json;charset=UTF-8
 
 
-#From the Consumer perspective, when shooting a request in the integration test:
+#From the Consumer perspective, when running a request in the integration test, we can interpret that test as follows:
 #
 #(1) - If the consumer sends a request
 #(2) - With the "PUT" method
 #(3) - to the URL "/fraudcheck"
 #(4) - with the JSON body that
-# * has a field `client.id`
-# * has a field `loanAmount` that is equal to `99999`
-#(5) - with header `Content-Type` equal to `application/json`
-#(6) - and a `client.id` json entry matches the regular expression `[0-9]{10}`
-#(7) - then the response will be sent with
-#(8) - status equal `200`
+# * has a `client.id` field
+# * has a `loanAmount` field that is equal to `99999`
+#(5) - with `Content-Type` header equal to `application/json`
+#(6) - and a `client.id` json entry matches a regular expression of `[0-9]{10}`
+#(7) - then the response is sent with
+#(8) - status equal to `200`
 #(9) - and JSON body equal to
 # { "fraudCheckStatus": "FRAUD", "rejection.reason": "Amount too high" }
 #(10) - with header `Content-Type` equal to `application/json`
 #
-#From the Producer perspective, in the autogenerated producer-side test:
+#From the Producer perspective, in the autogenerated producer-side test, we can interpret that test as follows:
 #
-#(1) - A request will be sent to the producer
+#(1) - A request is sent to the producer
 #(2) - With the "PUT" method
 #(3) - to the URL "/fraudcheck"
 #(4) - with the JSON body that
-# * has a field `client.id` `1234567890`
-# * has a field `loanAmount` that is equal to `99999`
-#(5) - with header `Content-Type` equal to `application/json`
-#(7) - then the test will assert if the response has been sent with
+# * has a `client.id` field with a value of `1234567890`
+# * has a `loanAmount` field with a value of `99999`
+#(5) - with a `Content-Type` header equal to `application/json`
+#(7) - then the test asserts if the response has been sent with
 #(8) - status equal `200`
-#(9) - and JSON body equal to
+#(9) - and a JSON body equal to
 # { "fraudCheckStatus": "FRAUD", "rejection.reason": "Amount too high" }
-#(10) - with header `Content-Type` equal to `application/json;charset=UTF-8`
+#(10) - with a `Content-Type` header equal to `application/json;charset=UTF-8`
 ```
 
-In this article we will focus on two main types of contract tests: Producer Contract testing and Consumer Driven Contract testing. The main difference between them is the cooperation style of the producer and the consumer.
+This article focuses on two main types of contract tests: Producer Contract testing and Consumer-Driven Contract testing. The main difference between them is the cooperation style of the producer and the consumer.
 
-- In the Producer Contract testing approach, the producer defines the contracts/ writes the contract tests, describes the API and publishes the stubs without any cooperation with its clients. Often this happens when the API is public and the owners of the API don't even know who exactly is using it. An example can be https://start.spring.io[Spring Initializr] that publishes its stubs via https://cloud.spring.io/spring-cloud-static/Edgware.SR2/multi/multi__spring_cloud_contract_wiremock.html#_generating_stubs_using_rest_docs[Spring Rest Docs] tests. The stubs for version `0.5.0.BUILD-SNAPSHOT` are available https://repo.spring.io/libs-snapshot/io/spring/initializr/initializr-web/0.5.0.BUILD-SNAPSHOT/[here with the `stubs` classifier].
-- In the Consumer Driven Contract testing approach, the contracts are suggested by the consumers, in strong cooperation with the producer. The producer knows exactly which consumer defined which contract and which one gets broken when the contract compatibility gets broken. This approach is more common when working with an internal API.
+* In the Producer Contract testing approach, the producer defines the contracts and writes the contract tests, describes the API, and publishes the stubs without any cooperation with its clients. Often, this happens when the API is public and the owners of the API don't even know who exactly is using it. An example is https://start.spring.io[Spring Initializr], which publishes its stubs with https://cloud.spring.io/spring-cloud-static/Edgware.SR2/multi/multi__spring_cloud_contract_wiremock.html#_generating_stubs_using_rest_docs[Spring Rest Docs] tests. The stubs for version `0.5.0.BUILD-SNAPSHOT` are available https://repo.spring.io/libs-snapshot/io/spring/initializr/initializr-web/0.5.0.BUILD-SNAPSHOT/[here with the `stubs` classifier].
+* In the Consumer-Driven Contract testing approach, the contracts are suggested by the consumers, in strong cooperation with the producer. The producer knows exactly which consumer defined which contract and which one gets broken when the contract compatibility gets broken. This approach is more common when working with an internal API.
 
-In both cases the contracts can be defined in the repo of the producer (either defined via a DSL or by writing contract tests) or an external repo where all contracts are stored.
+In both cases, the contracts can be defined in the repository of the producer (either defined with a DSL or by writing contract tests) or an external repo where all the contracts are stored.
 
 = Introduction to Maven Nomenclature
 
-Since it's much easier now to use Spring Cloud Contract by non-JVM projects, it's good to explain the basic terms behind the packaging defaults and introduce the https://maven.apache.org/[Maven] nomenclature.
+Since it's much easier now to use Spring Cloud Contract for non-JVM projects, it's good to explain the basic terms behind the packaging defaults and introduce the https://maven.apache.org/[Maven] nomenclature.
 
-TIP: Apache Maven is a software project management and comprehension tool. Based on the concept of a project object model (POM), Maven can manage a project's build, reporting and documentation from a central piece of information. (https://maven.apache.org/)
+TIP: Apache Maven is a software project management and comprehension tool. Based on the concept of a project object model (POM), Maven can manage a project's build, reporting, and documentation from a central piece of information. (See https://maven.apache.org/)
 
-Part of the following definitions were taken from the https://maven.apache.org/glossary.html[Maven Glossary]
+(Part of the following definitions were taken from the https://maven.apache.org/glossary.html[Maven Glossary].)
 
-- `Project`: Maven thinks in terms of projects. Everything that you will build are projects. Those projects follow a well defined
+* `Project`: Maven thinks in terms of projects. Everything that you build are projects. Those projects follow a well defined
 "Project Object Model". Projects can depend on other projects, in which case the latter are called "dependencies". A project may
-consistent of several subprojects, however these subprojects are still treated equally as projects.
-- `Artifact`: An artifact is something that is either produced or used by a project. Examples of artifacts produced by Maven for a project
-include: JARs, source and binary distributions. Each artifact is uniquely identified by a group id and an artifact id which is
+consistent of several subprojects. However, these subprojects are still treated as projects.
+* `Artifact`: An artifact is something that is either produced or used by a project. Examples of artifacts produced by Maven for a project
+include JARs and source and binary distributions. Each artifact is uniquely identified by a group ID and an artifact ID, which is
 unique within a group.
-- `JAR`: JAR stands for Java ARchive. It's a format based on the ZIP file format. Spring Cloud Contract packages the contracts and generated stubs in a JAR file.
-- `GroupId`: A group id is a universally unique identifier for a project. While this is often just the project name (eg. commons-collections), it is helpful to use a fully-qualified package name to distinguish it from other projects with a similar name (eg. org.apache.maven). Typically, when published to the Artifact Manager, the `GroupId` will get slash separated and form part of the URL. E.g. for group id `com.example` and artifact id `application` would be `/com/example/application/`.
-- `Classifier`: The Maven dependency notation looks as follows: `groupId:artifactId:version:classifier`. The classifier is additional suffix passed to the dependency. E.g. `stubs`, `sources`. The same dependency e.g. `com.example:application` can produce multiple artifacts that differ from each other with the classifier.
-- `Artifact manager`: When you generate binaries/ sources/ packages, you would like them to be available for others to download / reference or reuse. In case of the JVM world those artifacts would be JARs, for Ruby these are gems and for Docker those would be Docker images. You can store those artifacts in a manager. Examples of such managers can be https://jfrog.com/artifactory/[Artifactory]
-or http://www.sonatype.org/nexus/[Nexus].
+* `JAR`: JAR stands for Java ARchive. It's a format based on the ZIP file format. Spring Cloud Contract packages the contracts and generated stubs in a JAR file.
+* `GroupId`: A group ID is a universally unique identifier for a project. While this is often the project name (for example, `commons-collections`), it is helpful to use a fully-qualified package name to distinguish it from other projects with a similar name (for example, `org.apache.maven`). Typically, when published to the Artifact Manager, the `GroupId` gets slash separated and forms part of the URL. For example, for a group ID of `com.example`, an artifact ID for `application` would be `/com/example/application/`.
+* `Classifier`: The Maven dependency notation looks as follows: `groupId:artifactId:version:classifier`. The classifier is an additional suffix passed to the dependency (for example `stubs` or `sources`). The same dependency (for example,`com.example:application`) can produce multiple artifacts that differ from each other by the classifier.
+* `Artifact manager`: When you generate binaries, sources, or packages, you would like them to be available for others to download, reference, or reuse. In the JVM world, those artifacts would be JARs. For Ruby, these would be gems. For Docker, they would be Docker images. You can store those artifacts in a manager. Examples of such managers include https://jfrog.com/artifactory/[Artifactory]
+and http://www.sonatype.org/nexus/[Nexus].
 
 = What is Spring Cloud Contract
 
-https://cloud.spring.io/spring-cloud-contract/[Spring Cloud Contract] is an umbrella project holding solutions that help users in successfully implementing different sorts of contract tests. It comes with two main modules. `Spring Cloud Contract Verifier` that is used mainly by the producer side and `Spring Cloud Contract Stub Runner` that is used by the consumer side.
+https://cloud.spring.io/spring-cloud-contract/[Spring Cloud Contract] is an umbrella project holding solutions that help users to implement different sorts of contract tests. It comes with two main modules: `Spring Cloud Contract Verifier`, which is used mainly by the producer side, and `Spring Cloud Contract Stub Runner`, which is used by the consumer side.
 
-The project allows you to define contracts using:
+The project lets you define contracts using:
 
-- http://www.groovy-lang.org/[Groovy DSL]
-- http://yaml.org/[YAML]
-- https://docs.pact.io/[Pact JSON]
-- https://cloud.spring.io/spring-cloud-static/Edgware.SR2/multi/multi__spring_cloud_contract_wiremock.html#_generating_stubs_using_rest_docs[Spring Rest Docs]
+* http://www.groovy-lang.org/[Groovy DSL]
+* http://yaml.org/[YAML]
+* https://docs.pact.io/[Pact JSON]
+* https://cloud.spring.io/spring-cloud-static/Edgware.SR2/multi/multi__spring_cloud_contract_wiremock.html#_generating_stubs_using_rest_docs[Spring Rest Docs]
 
-Let us assume that we've decided to write the contracts using YAML. On the *producer* side, from the contracts:
+Let's assume that we've decided to write the contracts using YAML. On the producer side, from the contracts:
 
-- tests are generated via a Maven or https://gradle.org/[Gradle] plugin to assert that the contract is met
-- stubs are generated for other projects to reuse
+* Tests are generated with a Maven or https://gradle.org/[Gradle] plugin to assert that the contract is met.
+* Stubs are generated for other projects to reuse.
 
-The simplified flow of the producer contract approach, for a JVM application using Spring Cloud Contract with YAML contracts looks as follows.
+The simplified flow of the producer contract approach, for a JVM application using Spring Cloud Contract with YAML contracts goes as follows.
 
-The producer
+The producer:
 
-- applies a Maven/ Gradle Spring Cloud Contract plugin
-- defines YAML contracts under `src/test/resources/contracts/`
-- from the contract tests and stubs are generated
-- creates a base class that extends the generated tests and sets up the test context
-- once the tests pass a JAR with `stubs` classifier is created where contracts and stubs are stored
-- the JAR with `stubs` classifier gets uploaded to a binary storage
+* Applies a Maven or Gradle Spring Cloud Contract plugin.
+* Defines YAML contracts under `src/test/resources/contracts/`.
+* Generates tests and stubs from the contract.
+* Creates a base class that extends the generated tests and sets up the test context.
+* Once the tests pass, creates a JAR with `stubs` classifier where contracts and stubs are stored.
+* Uploads the JAR with a `stubs` classifier to binary storage.
 
-The consumer
+The consumer:
 
-- uses Stub Runner to fetch the stubs of the producer
-- Stub Runner starts in memory HTTP servers (by default those are wiremock.org[WireMock servers]) fed with the stubs
-- can execute tests against the stubs
+* Uses Stub Runner to fetch the stubs of the producer. Stub Runner starts in memory HTTP servers (by default, those are wiremock.org[WireMock servers]) fed with the stubs.
+* Runs tests against the stubs.
 
-Usage of Spring Cloud Contract and Contract Testing as such gives you:
+Consequently, using Spring Cloud Contract and Contract Testing gives you:
 
-- stubs reliability - they were generated only after the tests have passed
-- stubs reusability - they can be downloaded and reused by multiple consumers
+* stubs reliability: They were generated only after the tests have passed.
+* stubs reusability: They can be downloaded and reused by multiple consumers.
 
-= What is the current "problem" with Spring Cloud Contract
+= What is the Current "Problem" with Spring Cloud Contract
 
-Distibuted systems are set up from applications written in different languages and frameworks. One of the "problems" with Spring Cloud Contract was that the DSL had to be written in Groovy. Even though the contract didn't require any special knowledge of the language, it became a problem for the non-JVM users.
+Distibuted systems are set up from applications written in different languages and frameworks. One of the "problems" with Spring Cloud Contract was that the DSL had to be written in Groovy. Even though the contract didn't require any special knowledge of the language, it became a problem for non-JVM users.
 
-On the producer side, Spring Cloud Contract generates tests in Java or Groovy. Of course, it became a problem to use those tests in a non-JVM environment. Not only do you need to have Java installed but also the tests are generated via a Maven or Gradle plugin, which requires usage of these build tools.
+On the producer side, Spring Cloud Contract generates tests in Java or Groovy. Of course, it became a problem to use those tests in a non-JVM environment. Not only do you need to have Java installed, but the tests are generated with a Maven or Gradle plugin, which requires using those build tools.
 
 = Spring Cloud Contract and Polyglot Support
 
-Starting with `Edgware.SR2` release train and `1.2.3.RELEASE` of Spring Cloud Contract we've decided to add features that would allow much wider adoption of Spring Cloud Contract in the non-JVM world.
+Starting with the `Edgware.SR2` release train and `1.2.3.RELEASE` of Spring Cloud Contract, we decided to add features that allow much wider adoption of Spring Cloud Contract in the non-JVM world.
 
-We've added support for writing contracts using YAML. YAML is a (yet another) markup language that is not bound to any specific language and is already quite widely used. That should tackle the "problem" of defining contracts using a DSL that is related to any specific language.
+We added support for writing contracts with YAML. YAML is a (yet another) markup language that is not bound to any specific language and is already widely used. That should tackle the "problem" of defining contracts using a DSL that is related to any specific language.
 
-In order to hide the implementation details such as generation of java tests, plugin setup or Java installation we needed to introduce a layer of abstraction. We've decided to hide those by using https://www.docker.com/[Docker] images. We've encapsulated all the project setup, required packages, folder structures inside a docker image in such a way, that no knowledge, other than required environment variables, is required from the user.
+In order to hide the implementation details (such as generation of java tests, plugin setup, or Java installation), we needed to introduce a layer of abstraction. We decided to hide those by using https://www.docker.com/[Docker] images. We encapsulated all the project setup, required packages, and folder structures inside a docker image in such a way that no knowledge, other than required environment variables, is required from the user.
 
-We've introduced Docker images for both the https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#docker-project[producer] and the https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#stubrunner-docker[consumer]. All the JVM related logic gets wrapped in a Docker container, which means that you don't even have to have Java installed to generate tests and run the stubs using Stub Runner.
+We introduced Docker images for both the https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#docker-project[producer] and the https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#stubrunner-docker[consumer]. All the JVM-related logic gets wrapped in a Docker container, which means that you don't have to have Java installed to generate tests and run the stubs with Stub Runner.
 
-In the following sections we will go through an example of a NodeJS application tested using Spring Cloud Contract. The code was forked from https://github.com/bradtraversy/bookstore and is available under https://github.com/spring-cloud-samples/spring-cloud-contract-nodejs . Our aim is to start generating tests and stubs for an existing application as fast as possible with the least effort.
+The following sections go through an example of a NodeJS application being tested by using Spring Cloud Contract. The code was forked from https://github.com/bradtraversy/bookstore and is available under https://github.com/spring-cloud-samples/spring-cloud-contract-nodejs. Our aim is to start generating tests and stubs for an existing application as quickly as possible with the least effort.
 
 = Spring Cloud Contract on the Producer Side
 
-Let's clone the simple NodeJS MVC application. It connects to a Mongo DB database to store data about books.
+Let's clone the simple NodeJS MVC application, as follows:
 
 ```bash
 $ git clone https://github.com/spring-cloud-samples/spring-cloud-contract-nodejs
 $ cd bookstore
 ```
 
-The YAML contracts are available under `/contracts` folder.
+It connects to a Mongo DB database to store data about books.
+
+The YAML contracts are available under the `/contracts` folder, as follows:
 
 ```bash
 $  ls -al contracts
@@ -177,9 +178,9 @@ drwxr-xr-x  20 mgrzejszczak  staff  640 Feb 13 12:51 ..
 -rw-r--r--   1 mgrzejszczak  staff  627 Feb 13 12:51 2_shouldReturnListOfBooks.yml
 ```
 
-The numerical suffixes tell Spring Cloud Contract that the tests generated from these contracts need to be executed sequentially. The stubs will be stateful, meaning that only after performing a request matched by `1_shouldAddABook` will the `2_shouldReturnListOfBooks.yml` be available by the stubbed HTTP server.
+The numerical suffixes tell Spring Cloud Contract that the tests generated from these contracts need to be executed sequentially. The stubs are stateful, meaning that, only after performing a request matched by `1_shouldAddABook` is the `2_shouldReturnListOfBooks.yml` be available from the stubbed HTTP server.
 
-IMPORTANT: In the real life example, we would run our NodeJS application in a contract testing mode where calls to the database would be stubbed out and there would be no need for stateful stubs. In this example we want to show how we can benefit from Spring Cloud Contract in no time.
+IMPORTANT: In a real-life example, we would run our NodeJS application in a contract testing mode where calls to the database would be stubbed out and there would be no need for stateful stubs. In this example, we want to show how we can benefit from Spring Cloud Contract in no time.
 
 Let's take a look at one of the stubs:
 
@@ -205,53 +206,52 @@ response:
   status: 200
 ```
 
-The contract states that if a `POST` request is sent to `/api/books` with a header `Content-Type: application/json` and the aforementioned body, then the response should be `200`. Now, before running the contract tests, let's analyze the Spring Cloud Contract docker image requirements.
+The contract states that, if a `POST` request is sent to `/api/books` with a header of `Content-Type: application/json` and the aforementioned body, then the response should be `200`. Now, before running the contract tests, let's analyze the Spring Cloud Contract docker image requirements.
 
 == Spring Cloud Contract Docker Image
 
 The image is available on https://hub.docker.com/r/springcloud/spring-cloud-contract/[DockerHub under SpringCloud org].
 
-It's enough for you to mount your contracts, pass the environment variables and the image will:
+Once you mount your contracts and pass the environment variables, the image:
 
-- generate the contract tests
-- execute the tests against the provided URL
-- generate the http://wiremock.org[WireMock] stubs
-- (optional - turned on by default) publish the stubs to the Artifact Manager
+* Generates the contract tests.
+* Executes the tests against the provided URL.
+* Generates the http://wiremock.org[WireMock] stubs.
+* Publishes the stubs to the Artifact Manager. (This step is optional but turned on by default.)
 
-IMPORTANT: The generated tests will assume that your application is up and running and ready to listen to requests on a given port. That means you have to run it **before** running the contract tests.
+IMPORTANT: The generated tests assume that your application is running and ready to listen to requests on the specified port. That means you have to run it before running the contract tests.
 
 == Spring Cloud Contract Docker Image setup
 
-The Docker image searches for contracts under the `/contracts` folder. The output from running the tests will be available under `/spring-cloud-contract/build` folder (it's useful for debugging purposes). You will need to mount those volumes when running the build.
+The Docker image searches for contracts under the `/contracts` folder. The output from running the tests is available under the `/spring-cloud-contract/build` folder (it's useful for debugging purposes). You need to mount those volumes when running the build.
 
-It also requires some environment variables to point to your running application, to the Artifact Manager instance etc.
+The Docker image also requires some environment variables that point to your running application, to the Artifact Manager instance, and others, as described in the following list:
 
-- `PROJECT_GROUP` - your project's group id. Defaults to `com.example`.
-- `PROJECT_VERSION` - your project's version. Defaults to `0.0.1-SNAPSHOT`
-- `PROJECT_NAME` - artifact id. Defaults to `example`
-- `REPO_WITH_BINARIES_URL` - URL of your Artifact Manager. Defaults to `http://localhost:8081/artifactory/libs-release-local`
-which is the default URL of https://jfrog.com/artifactory/[Artifactory] running locally
-- `REPO_WITH_BINARIES_USERNAME` - (optional) username when the Artifact Manager is secured
-- `REPO_WITH_BINARIES_PASSWORD` - (optional) password when the Artifact Manager is secured
-- `PUBLISH_ARTIFACTS` - if set to `true` then will publish artifact to binary storage. Defaults to `true`.
+* `PROJECT_GROUP`: Your project's group ID. Defaults to `com.example`.
+* `PROJECT_VERSION`: Your project's version. Defaults to `0.0.1-SNAPSHOT`.
+* `PROJECT_NAME`. The artifact ID. Defaults to `example`.
+* `REPO_WITH_BINARIES_URL` - The URL of your Artifact Manager. Defaults to `http://localhost:8081/artifactory/libs-release-local`,
+which is the default URL of https://jfrog.com/artifactory/[Artifactory] when running locally.
+* `REPO_WITH_BINARIES_USERNAME`: (optional) username when the Artifact Manager is secured.
+* `REPO_WITH_BINARIES_PASSWORD`: (optional) password when the Artifact Manager is secured.
+* `PUBLISH_ARTIFACTS`: If set to `true`, publish the artifact to binary storage. Defaults to `true`.
 
-These environment variables are used when tests are executed:
+The following environment variables are used when tests run:
 
-- `APPLICATION_BASE_URL` - url against which tests should be executed.
-Remember that it has to be accessible from the Docker container (e.g. `localhost`
-will not work)
-- `APPLICATION_USERNAME` - (optional) username for basic authentication to your application
-- `APPLICATION_PASSWORD` - (optional) password for basic authentication to your application
+* `APPLICATION_BASE_URL`: URL against which tests should be executed.
+Remember that it has to be accessible from the Docker container (`localhost` does not work).
+* `APPLICATION_USERNAME`: (optional) username for basic authentication to your application.
+* `APPLICATION_PASSWORD`: (optional) password for basic authentication to your application.
 
 = Running Spring Cloud Contract tests on the Producer Side
 
-Since we want to run tests, we could just execute:
+Since we want to run tests, we could use:
 
 ```bash
 $ npm test
 ```
 
-however, for learning purposes, let's split it into pieces:
+However, for learning purposes, let's split it into pieces, as follows:
 
 ```bash
 # Stop docker infra (nodejs, artifactory)
@@ -281,40 +281,36 @@ $ docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" -e "PUBLISH
 $ pkill -f "node app"
 ```
 
-What will happen is that via bash scripts:
+What will happen is that, through the bash scripts:
 
-- infrastructure will be set up (MongoDb, Artifactory).
-- due to the constraint that we don't have the database mocked in the NodeJS application the contracts also represent the stateful situation
-** first request is a `POST` that causes data to get inserted to the database
-** second request is a `GET` that returns a list of data with 1 previously inserted element
-- the NodeJS application will be started (on port `3000`) and will be available under `192.168.0.100` IP.
-- contract tests will be generated via Docker and tests
-will be executed against the running application
-** the contracts will be taken from `/contracts` folder.
-** the output of the test execution is available under
-`node_modules/spring-cloud-contract/output`.
-- the stubs will be uploaded to Artifactory. You can check them out
-under http://localhost:8081/artifactory/libs-release-local/com/example/bookstore/0.0.1.RELEASE/ .
-The stubs will be here: http://localhost:8081/artifactory/libs-release-local/com/example/bookstore/0.0.1.RELEASE/bookstore-0.0.1.RELEASE-stubs.jar.
+* Infrastructure  (MongoDb, Artifactory)gets set up.
+* Due to the constraint that we don't have the database mocked in the NodeJS application, the contracts also represent the stateful situation
+** The first request is a `POST` that causes data to get inserted to the database.
+** The second request is a `GET` that returns a list of data with one previously inserted element.
+* The NodeJS application is started (on port `3000`) and is available at `192.168.0.100`.
+* Contract tests are generated by Docker and tests are executed against the running application.
+** The contracts are taken from the `/contracts` folder.
+** The output of the test execution is available at `node_modules/spring-cloud-contract/output`.
+* The stubs are uploaded to Artifactory. You can check them out
+at http://localhost:8081/artifactory/libs-release-local/com/example/bookstore/0.0.1.RELEASE/ .
+The stubs are at http://localhost:8081/artifactory/libs-release-local/com/example/bookstore/0.0.1.RELEASE/bookstore-0.0.1.RELEASE-stubs.jar.
 
-To sum up: It was enough to define the YAML contracts, run the NodeJS application and run the Docker image to generate contract tests, stubs and upload them to Artifactory!
+To sum up, we defined the YAML contracts, ran the NodeJS application, and ran the Docker image to generate contract tests and stubs and upload them to Artifactory.
 
-= Using Spring Cloud Contract stubs on the consumer side
+= Using Spring Cloud Contract Stubs on the Consumer Side
 
-We're publishing a https://hub.docker.com/r/springcloud/spring-cloud-contract-stub-runner/[spring-cloud/spring-cloud-contract-stub-runner] Docker image that will start the standalone version of Stub Runner.
+In this example, We publish a https://hub.docker.com/r/springcloud/spring-cloud-contract-stub-runner/[spring-cloud/spring-cloud-contract-stub-runner] Docker image that starts the standalone version of Stub Runner.
 
-TIP: If you're ok with running a `java -jar` command instead of running Docker, you can download a standalone JAR from Maven (e.g. for version 1.2.3.RELEASE) `wget -O stub-runner.jar 'https://search.maven.org/remote_content?g=org.springframework.cloud&a=spring-cloud-contract-stub-runner-boot&v=1.2.3.RELEASE'`
+TIP: If you're comfortable with running a `java -jar` command instead of running Docker, you can download a standalone JAR from Maven (for example, for version 1.2.3.RELEASE), as follows: `wget -O stub-runner.jar 'https://search.maven.org/remote_content?g=org.springframework.cloud&a=spring-cloud-contract-stub-runner-boot&v=1.2.3.RELEASE'`
 
-You can pass any of the https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#common-properties-junit-spring[following properties] as environment variables. The convention is that all the
-letters should be upper case. The convention is that all the letters should be upper case, the camel case notation word delimiters and the dots (`.`) should be replaced with underscores (`_`). E.g.
- the `stubrunner.repositoryRoot` property should be represented as a `STUBRUNNER_REPOSITORY_ROOT` environment variable.
+You can pass any of the https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#common-properties-junit-spring[properties] as environment variables. The convention is that all the letters should be upper case and that the word delimiters and the dots (`.`) should be replaced with underscores (`_`). For example, the `stubrunner.repositoryRoot` property should be represented as a `STUBRUNNER_REPOSITORY_ROOT` environment variable.
 
-Let's assume that we want to run the stubs of the bookstore application on port `9876`. Let's run the Stub Runner Boot application with the stubs.
+Let's assume that we want to run the stubs of the bookstore application on port `9876`. To do so, let's run the Stub Runner Boot application with the stubs, as follows:
 
 ```bash
 # Provide the Spring Cloud Contract Docker version
 $ SC_CONTRACT_DOCKER_VERSION="1.2.3.RELEASE"
-# The IP at which the app is running and Docker container can reach it
+# The IP at which the app is running and the Docker container can reach it
 $ APP_IP="192.168.0.100"
 # Spring Cloud Contract Stub Runner properties
 $ STUBRUNNER_PORT="8083"
@@ -325,33 +321,33 @@ $ STUBRUNNER_REPOSITORY_ROOT="http://${APP_IP}:8081/artifactory/libs-release-loc
 $ docker run  --rm -e "STUBRUNNER_IDS=${STUBRUNNER_IDS}" -e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" -p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" -p "9876:9876" springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
 ```
 
-What's happened is that:
+That script:
 
-- a standalone Spring Cloud Contract Stub Runner application got started
-- Stub Runner downloaded the stubs with coordinates `com.example:bookstore:0.0.1.RELEASE:stubs`
-- the stubs got downloaded from Artifactory running at `http://192.168.0.100:8081/artifactory/libs-release-local`
-- after a while Stub Runner will be running on port `8083`
-- and the stubs will be running at port `9876`
+* Starts a standalone Spring Cloud Contract Stub Runner application.
+* Causes Stub Runner to download the stubs with the following coordinates: `com.example:bookstore:0.0.1.RELEASE:stubs`.
+* Downloads the stubs from Artifactory at `http://192.168.0.100:8081/artifactory/libs-release-local`.
+* Starts (after a delay) Stub Runner on port `8083`.
+* Runs the stubs at port `9876`.
 
-On the server side we built a stateful stub. Let's use curl to assert that the stubs are setup properly.
+On the server side, we built a stateful stub. Let's use curl to assert that the stubs are setup properly, as follows:
 
 ```bash
 # let's execute the first request (no response is returned)
 $ curl -H "Content-Type:application/json" -X POST --data '{ "title" : "Title", "genre" : "Genre", "description" : "Description", "author" : "Author", "publisher" : "Publisher", "pages" : 100, "image_url" : "https://d213dhlpdb53mu.cloudfront.net/assets/pivotal-square-logo-41418bd391196c3022f3cd9f3959b3f6d7764c47873d858583384e759c7db435.svg", "buy_url" : "https://pivotal.io" }' http://localhost:9876/api/books
-# Now time for the second request
+# Now it's time for the second request
 $ curl -X GET http://localhost:9876/api/books
-# You will receive contents of the JSON
+# You should receive the contents of the JSON
 ```
 
-To sum up: Once the stubs got uploaded, it's enough to run a Docker image with a couple of environment variables and reuse them in our integration tests, regardless of the programming language used.
+To sum up, once the stubs got uploaded, you can run a Docker image with a couple of environment variables and reuse them in your integration tests, regardless of the programming language used.
 
 = Summary
 
-In this blog post we've explained what Contract Tests are and why they are important. We've presented how Spring Cloud Contract can be used to generate and execute contract tests. Finally, we've gone through an example of how one can use Spring Cloud Contract Docker images for the producer and the consumer for a non-JVM application.
+In this blog post, we explained what Contract Tests are and why they are important. We presented how Spring Cloud Contract can be used to generate and execute contract tests. Finally, we went through an example of how you can use Spring Cloud Contract Docker images for the producer and the consumer for a non-JVM application.
 
 = Additional Resources
 
-- read the documentation of https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#docker-project[Spring Cloud Contract image]
-- read the documentation of https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#stubrunner-docker[Spring Cloud Contract Stub Runner image]
-- check out the https://github.com/spring-cloud-samples/spring-cloud-contract-nodejs[Bookstore sample]
-- ask questions on https://gitter.im/spring-cloud/spring-cloud-contract[Spring Cloud Contract Gitter channel]
+* Read the documentation of https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#docker-project[Spring Cloud Contract].
+* Read the documentation of https://cloud.spring.io/spring-cloud-static/Edgware.SR2/single/spring-cloud.html#stubrunner-docker[Spring Cloud Contract Stub Runner].
+* Check out the https://github.com/spring-cloud-samples/spring-cloud-contract-nodejs[Bookstore sample].
+* Ask questions on https://gitter.im/spring-cloud/spring-cloud-contract[Spring Cloud Contract Gitter channel].
