@@ -12,10 +12,10 @@ It's always tempting to set up an environment for end-to-end tests, spawn all ap
 
 A potential solution to this problem are Contract Tests. Before we go into details of what those are, let's define some terms:
 
-*producer*: The server-side owner (for example, the owner of a HTTP API) or a producer of a message sent through a queue, such as RabbitMQ.
-*consumer*: The application that consumes the HTTP API or listens to messages received through (for example) RabbitMQ.
-*contract*: An agreement between the producer and the consumer on what the communication should look like. **It is not a schema**. It is more of a scenario of usage. For example, for this particular scenario, I expect a specified input and then I reply with a specified output.
-*contract test*: A test that verifies that the producer and the consumer can integrate with each other. **It does not mean that the functionality works**. This distinction is important, because you would not want to duplicate your work by writing a contract for each feature. Contract tests assert that the integration between the producer and the consumer meets the requirements defined in the contract. Their main advantage is that they are fast and reliable.
+* *producer*: The server-side owner (for example, the owner of a HTTP API) or a producer of a message sent through a queue, such as RabbitMQ.
+* *consumer*: The application that consumes the HTTP API or listens to messages received through (for example) RabbitMQ.
+* *contract*: An agreement between the producer and the consumer on what the communication should look like. **It is not a schema**. It is more of a scenario of usage. For example, for this particular scenario, I expect a specified input and then I reply with a specified output.
+* *contract test*: A test that verifies that the producer and the consumer can integrate with each other. **It does not mean that the functionality works**. This distinction is important, because you would not want to duplicate your work by writing a contract for each feature. Contract tests assert that the integration between the producer and the consumer meets the requirements defined in the contract. Their main advantage is that they are fast and reliable.
 
 The following example shows a contract written in YAML:
 
@@ -76,8 +76,8 @@ response: # (7)
 
 This article focuses on two main types of contract tests: Producer Contract testing and Consumer-Driven Contract testing. The main difference between them is the cooperation style of the producer and the consumer.
 
-* In the Producer Contract testing approach, the producer defines the contracts and writes the contract tests, describes the API, and publishes the stubs without any cooperation with its clients. Often, this happens when the API is public and the owners of the API don't even know who exactly is using it. An example is https://start.spring.io[Spring Initializr], which publishes its stubs with https://cloud.spring.io/spring-cloud-static/Edgware.SR2/multi/multi__spring_cloud_contract_wiremock.html#_generating_stubs_using_rest_docs[Spring Rest Docs] tests. The stubs for version `0.5.0.BUILD-SNAPSHOT` are available https://repo.spring.io/libs-snapshot/io/spring/initializr/initializr-web/0.5.0.BUILD-SNAPSHOT/[here with the `stubs` classifier].
-* In the Consumer-Driven Contract testing approach, the contracts are suggested by the consumers, in strong cooperation with the producer. The producer knows exactly which consumer defined which contract and which one gets broken when the contract compatibility gets broken. This approach is more common when working with an internal API.
+* In the *Producer Contract* testing approach, the producer defines the contracts and writes the contract tests, describes the API, and publishes the stubs without any cooperation with its clients. Often, this happens when the API is public and the owners of the API don't even know who exactly is using it. An example is https://start.spring.io[Spring Initializr], which publishes its stubs with https://cloud.spring.io/spring-cloud-static/Edgware.SR2/multi/multi__spring_cloud_contract_wiremock.html#_generating_stubs_using_rest_docs[Spring Rest Docs] tests. The stubs for version `0.5.0.BUILD-SNAPSHOT` are available https://repo.spring.io/libs-snapshot/io/spring/initializr/initializr-web/0.5.0.BUILD-SNAPSHOT/[here with the `stubs` classifier].
+* In the *Consumer-Driven Contract* testing approach, the contracts are suggested by the consumers, in strong cooperation with the producer. The producer knows exactly which consumer defined which contract and which one gets broken when the contract compatibility gets broken. This approach is more common when working with an internal API.
 
 In both cases, the contracts can be defined in the repository of the producer (either defined with a DSL or by writing contract tests) or an external repo where all the contracts are stored.
 
@@ -278,7 +278,12 @@ $ export PROJECT_GROUP="com.example"
 $ export PROJECT_VERSION="0.0.1.RELEASE"
 
 # Execute contract tests
-$ docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" -e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${PROJECT_NAME}" -e "PROJECT_GROUP=${PROJECT_GROUP}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" -e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" -v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" springcloud/spring-cloud-contract:"${SC_CONTRACT_DOCKER_VERSION}"
+$ docker run  --rm -e "APPLICATION_BASE_URL=${APPLICATION_BASE_URL}" \
+  -e "PUBLISH_ARTIFACTS=true" -e "PROJECT_NAME=${PROJECT_NAME}" \
+  -e "PROJECT_GROUP=${PROJECT_GROUP}" -e "REPO_WITH_BINARIES_URL=${ARTIFACTORY_URL}" \
+  -e "PROJECT_VERSION=${PROJECT_VERSION}" -v "${CURRENT_DIR}/contracts/:/contracts:ro" \
+  -v "${CURRENT_DIR}/node_modules/spring-cloud-contract/output:/spring-cloud-contract-output/" \
+  springcloud/spring-cloud-contract:"${SC_CONTRACT_DOCKER_VERSION}"
 
 # Kill app
 $ pkill -f "node app"
@@ -286,7 +291,7 @@ $ pkill -f "node app"
 
 What will happen is that, through the bash scripts:
 
-* Infrastructure  (MongoDb, Artifactory)gets set up.
+* Infrastructure  (MongoDb, Artifactory) gets set up.
 * Due to the constraint that we don't have the database mocked in the NodeJS application, the contracts also represent the stateful situation
 ** The first request is a `POST` that causes data to get inserted to the database.
 ** The second request is a `GET` that returns a list of data with one previously inserted element.
@@ -321,7 +326,10 @@ $ export STUBRUNNER_PORT="8083"
 $ export STUBRUNNER_IDS="com.example:bookstore:0.0.1.RELEASE:stubs:9876"
 $ export STUBRUNNER_REPOSITORY_ROOT="http://${APP_IP}:8081/artifactory/libs-release-local"
 # Run the docker with Stub Runner Boot
-$ docker run  --rm -e "STUBRUNNER_IDS=${STUBRUNNER_IDS}" -e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" -p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" -p "9876:9876" springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
+$ docker run  --rm -e "STUBRUNNER_IDS=${STUBRUNNER_IDS}" \
+  -e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" \
+  -p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" -p "9876:9876" \
+  springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
 ```
 
 That script:
@@ -336,7 +344,8 @@ On the server side, we built a stateful stub. Let's use curl to assert that the 
 
 ```bash
 # let's execute the first request (no response is returned)
-$ curl -H "Content-Type:application/json" -X POST --data '{ "title" : "Title", "genre" : "Genre", "description" : "Description", "author" : "Author", "publisher" : "Publisher", "pages" : 100, "image_url" : "https://d213dhlpdb53mu.cloudfront.net/assets/pivotal-square-logo-41418bd391196c3022f3cd9f3959b3f6d7764c47873d858583384e759c7db435.svg", "buy_url" : "https://pivotal.io" }' http://localhost:9876/api/books
+$ curl -H "Content-Type:application/json" -X POST \
+  --data '{ "title" : "Title", "genre" : "Genre", "description" : "Description", "author" : "Author", "publisher" : "Publisher", "pages" : 100, "image_url" : "https://d213dhlpdb53mu.cloudfront.net/assets/pivotal-square-logo-41418bd391196c3022f3cd9f3959b3f6d7764c47873d858583384e759c7db435.svg", "buy_url" : "https://pivotal.io" }' http://localhost:9876/api/books
 # Now it's time for the second request
 $ curl -X GET http://localhost:9876/api/books
 # You should receive the contents of the JSON
