@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-1.2.3.BUILD-SNAPSHOT}"
+SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-1.2.4.BUILD-SNAPSHOT}"
 APP_IP="$( ./whats_my_ip.sh )"
 
 # Stub coordinates 'groupId:artifactId:version:classifier'
