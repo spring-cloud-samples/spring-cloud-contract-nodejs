@@ -7,8 +7,8 @@
     "test": "./run_tests.sh"
   },
   "dependencies": {
-    "express": "*",
     "body-parser": "*",
+    "express": "^4.16.3",
     "mongoose": "*"
   },
   "author": "Brad Traversy",

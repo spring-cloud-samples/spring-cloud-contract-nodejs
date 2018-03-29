@@ -1,0 +1,5 @@
+version: "2"
+services:
+  mongo:
+    image: mongo:jessie
+    ports: ["27017:27017"]

@@ -2,7 +2,7 @@
 
 set -o errexit
 
-echo -e "\n\nRunning tests against Artifactory\n\n"
+echo -e "\n\nRunning tests against Artifactory with external contracts\n\n"
 
 # Start docker infra
 ./stop_infra.sh
@@ -13,7 +13,7 @@ pkill -f "node app" || echo "Failed to kill app"
 nohup node app &
 
 # Execute contract tests
-./run_contract_tests.sh
+./run_contract_tests_from_external_contracts.sh
 
 # Kill app
 pkill -f "node app"
