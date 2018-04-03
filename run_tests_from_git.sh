@@ -10,6 +10,7 @@ echo -e "\n\nRunning tests from GIT\n\n"
 
 # Kill & Run app
 pkill -f "node app" || echo "Failed to kill app"
+yes | npm install || echo "Failed to install packages"
 nohup node app &
 
 # Execute contract tests
