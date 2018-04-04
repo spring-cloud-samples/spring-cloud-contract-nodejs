@@ -10,6 +10,7 @@ echo -e "\n\nRunning tests against Artifactory\n\n"
 
 # Kill & Run app
 pkill -f "node app" || echo "Failed to kill app"
+echo "Working around certificate issues" && npm config set strict-ssl false
 yes | npm install || echo "Failed to install packages"
 nohup node app &
 
