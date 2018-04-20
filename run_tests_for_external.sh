@@ -8,6 +8,9 @@ echo -e "\n\nRunning tests against Artifactory with external contracts\n\n"
 ./stop_infra.sh
 ./setup_infra.sh
 
+# Upload artifact of external contracts
+./upload_external_contracts_to_artifactory.sh
+
 # Kill & Run app
 pkill -f "node app" || echo "Failed to kill app"
 echo "Working around certificate issues" && npm config set strict-ssl false
