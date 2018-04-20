@@ -2,7 +2,7 @@
 echo "Fetching submodules"
 git submodule init
 git submodule update
-git submodule foreach git pull
+git submodule foreach git pull origin master
 
 echo "Building docker"
 pushd docker
