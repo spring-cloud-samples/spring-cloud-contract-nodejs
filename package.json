@@ -10,7 +10,9 @@
   "dependencies": {
     "body-parser": "*",
     "express": "^4.16.3",
-    "mongoose": "*"
+    "mongoose": "*",
+    "npm": "^5.8.0",
+    "update": "^0.7.4"
   },
   "author": "Brad Traversy",
   "license": "ISC"
