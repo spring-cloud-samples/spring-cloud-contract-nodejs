@@ -10,7 +10,13 @@ Genre =require('./models/genre');
 Book =require('./models/book');
 
 // Connect to Mongoose
-mongoose.connect('mongodb://localhost/bookstore');
+var mongooseConnection='mongodb://localhost/bookstore'
+if (process.env.VCAP_SERVICES != "") {
+	var vcap_services = JSON.parse(process.env.VCAP_SERVICES)
+	var uri = vcap_services.sc_contract_nodejs_mongo[0].credentials.uri
+	mongooseConnection=uri
+}
+mongoose.connect(mongooseConnection);
 var db = mongoose.connection;
 
 app.get('/', (req, res) => {
@@ -106,5 +112,5 @@ app.delete('/api/books/:_id', (req, res) => {
 	});
 });
 
-app.listen(3000);
+app.listen(process.env.PORT || 3000);
 console.log('Running on port 3000...');

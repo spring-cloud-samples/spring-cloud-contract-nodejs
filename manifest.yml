@@ -1,0 +1,9 @@
+---
+applications:
+- name: sc-contract-nodejs
+  memory: 128M
+  path: .
+  command: node app.js
+  buildpack: https://github.com/cloudfoundry/nodejs-buildpack
+  services:
+    - sc_contract_nodejs_mongo

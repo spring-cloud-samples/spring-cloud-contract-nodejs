@@ -1,0 +1,20 @@
+# This file describes which services are required by this application
+# in order for the smoke tests on the TEST environment and end to end tests
+# on the STAGE environment to pass
+
+# lowercase name of the environment
+test:
+  # list of required services
+  services:
+    # type and name of the service
+    - name: sc_contract_nodejs_mongo
+      type: broker
+      broker: mlab
+      plan: sandbox
+stage:
+  services:
+    # type and name of the service
+    - name: sc_contract_nodejs_mongo
+      type: broker
+      broker: mlab
+      plan: sandbox
