@@ -7,7 +7,7 @@
   "scripts": {
     "group-id": "echo 'com.example'",
     "app-name": "echo 'spring-cloud-contract-nodejs'",
-    "test": "./run_tests.sh",
+    "test": "echo 'I would run some tests here'",
     "test-e2e": "curl ${APPLICATION_URL} --fail",
     "test-smoke": "curl ${APPLICATION_URL} --fail",
     "test-apicompatibility": "echo 'run apicompatibility test here'"
