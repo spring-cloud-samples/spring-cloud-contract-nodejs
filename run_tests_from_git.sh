@@ -12,6 +12,7 @@ echo -e "\n\nRunning tests from GIT\n\n"
 pkill -f "node app" || echo "Failed to kill app"
 echo "Working around certificate issues" && npm config set strict-ssl false
 yes | npm install || echo "Failed to install packages"
+yes | npm install express || echo "Failed to install package"
 nohup node app &
 
 # Execute contract tests

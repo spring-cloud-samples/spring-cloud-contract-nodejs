@@ -3,7 +3,7 @@
 set -o errexit
 
 CURRENT_DIR="$( pwd )"
-SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-2.0.0.BUILD-SNAPSHOT}"
+SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-2.0.2.BUILD-SNAPSHOT}"
 
 # Stub coordinates 'groupId:artifactId:version:classifier'
 STUB_GROUP="${STUB_GROUP:-com.example}"
