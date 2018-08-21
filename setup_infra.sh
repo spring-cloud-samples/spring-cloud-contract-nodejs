@@ -6,6 +6,7 @@ git submodule foreach git pull origin master
 
 echo "Building docker"
 pushd docker
+yes | docker-compose rm -v
 docker-compose build
 docker-compose up -d
 popd
