@@ -99,7 +99,7 @@ unique within a group.
 * `GroupId`: A group ID is a universally unique identifier for a project. While this is often the project name (for example, `commons-collections`), it is helpful to use a fully-qualified package name to distinguish it from other projects with a similar name (for example, `org.apache.maven`). Typically, when published to the Artifact Manager, the `GroupId` gets slash separated and forms part of the URL. For example, for a group ID of `com.example`, an artifact ID for `application` would be `/com/example/application/`.
 * `Classifier`: The Maven dependency notation looks as follows: `groupId:artifactId:version:classifier`. The classifier is an additional suffix passed to the dependency (for example `stubs` or `sources`). The same dependency (for example,`com.example:application`) can produce multiple artifacts that differ from each other by the classifier.
 * `Artifact manager`: When you generate binaries, sources, or packages, you would like them to be available for others to download, reference, or reuse. In the JVM world, those artifacts would be JARs. For Ruby, these would be gems. For Docker, they would be Docker images. You can store those artifacts in a manager. Examples of such managers include https://jfrog.com/artifactory/[Artifactory]
-and http://www.sonatype.org/nexus/[Nexus].
+and https://www.sonatype.org/nexus/[Nexus].
 
 = What is Spring Cloud Contract
 
@@ -108,7 +108,7 @@ https://cloud.spring.io/spring-cloud-contract/[Spring Cloud Contract] is an umbr
 The project lets you define contracts using:
 
 * http://www.groovy-lang.org/[Groovy DSL]
-* http://yaml.org/[YAML]
+* https://yaml.org/[YAML]
 * https://docs.pact.io/[Pact JSON]
 * https://cloud.spring.io/spring-cloud-static/Edgware.SR2/multi/multi__spring_cloud_contract_wiremock.html#_generating_stubs_using_rest_docs[Spring Rest Docs]
 
