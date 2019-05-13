@@ -10,7 +10,7 @@ APP_IP="$( ./whats_my_ip.sh )"
 APP_PORT="${APP_PORT:-3000}"
 ARTIFACTORY_PORT="${ARTIFACTORY_PORT:-8081}"
 APPLICATION_BASE_URL="http://${APP_IP}:${APP_PORT}"
-ARTIFACTORY_URL="http://admin:password@${APP_IP}:${ARTIFACTORY_PORT}/artifactory/libs-release-local"
+ARTIFACTORY_URL="https://admin:password@${APP_IP}:${ARTIFACTORY_PORT}/artifactory/libs-release-local"
 
 pushd spring-cloud-contract-nodejs-external-contracts
 echo "Running the build"
