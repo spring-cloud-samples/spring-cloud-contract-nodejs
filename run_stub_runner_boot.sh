@@ -2,7 +2,7 @@
 
 set -o errexit
 
-SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-2.2.0.BUILD-SNAPSHOT}"
+SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-3.0.0-SNAPSHOT}"
 APP_IP="$( ./whats_my_ip.sh )"
 
 # Stub coordinates 'groupId:artifactId:version:classifier'

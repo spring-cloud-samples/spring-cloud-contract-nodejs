@@ -5,7 +5,7 @@ set -o errexit
 # Here we assume that you've pushed to artifactory an artifact containing all contracts for all projects.
 # Example of such a project is available under https://github.com/spring-cloud-samples/spring-cloud-contract-nodejs-external-contracts
 
-SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-2.2.0.BUILD-SNAPSHOT}"
+SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-3.0.0-SNAPSHOT}"
 APP_IP="$( ./whats_my_ip.sh )"
 APP_PORT="${APP_PORT:-9876}"
 ARTIFACTORY_PORT="${ARTIFACTORY_PORT:-8081}"
