@@ -2,8 +2,12 @@
 
 set -o errexit
 
-CURRENT_DIR="$( pwd )"
 SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-3.0.0-SNAPSHOT}"
+
+# Setup
+docker rm $(docker stop $(docker ps -a -q --filter ancestor=springcloud/spring-cloud-contract-stub-runner:${SC_CONTRACT_DOCKER_VERSION} --format="{{.ID}}")) || echo "Nothing to cleanup"
+
+CURRENT_DIR="$( pwd )"
 
 # Stub coordinates 'groupId:artifactId:version:classifier'
 STUB_GROUP="${STUB_GROUP:-com.example}"
@@ -16,4 +20,26 @@ STUBRUNNER_PORT="${STUBRUNNER_PORT:-8083}"
 STUBRUNNER_IDS="${STUB_GROUP}:${STUB_ARTIFACT}:${STUB_VERSION}:stubs:${STUB_PORT}"
 STUBRUNNER_REPOSITORY_ROOT="git://file:/contracts_git/"
 
-docker run  --rm -e "STUBRUNNER_IDS=${STUBRUNNER_IDS}" -e "STUBRUNNER_STUBS_MODE=LOCAL" -e "SERVER_PORT=${STUBRUNNER_PORT}" -e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" -p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" -p "${STUB_PORT}:${STUB_PORT}" -v "${CURRENT_DIR}/build/contracts_git/:/contracts_git:rw" springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
+docker run  --rm \
+    -d \
+    -e "STUBRUNNER_IDS=${STUBRUNNER_IDS}" \
+    -e "STUBRUNNER_STUBS_MODE=LOCAL" \
+    -e "SERVER_PORT=${STUBRUNNER_PORT}" \
+    -e "STUBRUNNER_REPOSITORY_ROOT=${STUBRUNNER_REPOSITORY_ROOT}" \
+    -p "${STUBRUNNER_PORT}:${STUBRUNNER_PORT}" \
+    -p "${STUB_PORT}:${STUB_PORT}" \
+    -v "${CURRENT_DIR}/build/contracts_git/:/contracts_git:rw" \
+    springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
+
+echo "Waiting for stub runner to start (we could do this better by curling the stub endpoint of stub runner. It takes pretty long for snapshots..."
+SLEEP_TIME="${SLEEP_TIME:-120}"
+sleep ${SLEEP_TIME}
+
+# Making 2 requests to the stub
+pushd json
+    ./1_request.sh
+    ./2_request.sh
+popd
+
+# Cleanup
+docker rm $(docker stop $(docker ps -a -q --filter ancestor=springcloud/spring-cloud-contract-stub-runner:${SC_CONTRACT_DOCKER_VERSION} --format="{{.ID}}")) || echo "Nothing to cleanup"
