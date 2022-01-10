@@ -12,7 +12,7 @@ cp -r "${CURRENT_DIR}"/git_repository "${CURRENT_DIR}"/build/contracts_git
 mv "${CURRENT_DIR}"/build/contracts_git/git "${CURRENT_DIR}"/build/contracts_git/.git
 echo "Now we have a git repository available under ["${CURRENT_DIR}"/build/contracts_git/]"
 
-SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-3.0.2-SNAPSHOT}"
+SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-3.1.1-SNAPSHOT}"
 APP_IP="$( ./whats_my_ip.sh )"
 APP_PORT="${APP_PORT:-9876}"
 APPLICATION_BASE_URL="http://${APP_IP}:${APP_PORT}"

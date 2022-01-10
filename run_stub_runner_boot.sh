@@ -2,7 +2,7 @@
 
 set -o errexit
 
-SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-3.0.2-SNAPSHOT}"
+SC_CONTRACT_DOCKER_VERSION="${SC_CONTRACT_DOCKER_VERSION:-3.1.1-SNAPSHOT}"
 
 # Setup
 docker rm $(docker stop $(docker ps -a -q --filter ancestor=springcloud/spring-cloud-contract-stub-runner:${SC_CONTRACT_DOCKER_VERSION} --format="{{.ID}}")) || echo "Nothing to cleanup"
