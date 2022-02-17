@@ -31,7 +31,7 @@ docker run  --rm \
     springcloud/spring-cloud-contract-stub-runner:"${SC_CONTRACT_DOCKER_VERSION}"
 
 echo "Waiting for stub runner to start (we could do this better by curling the stub endpoint of stub runner. It takes pretty long for snapshots..."
-SLEEP_TIME="${SLEEP_TIME:-120}"
+SLEEP_TIME="${SLEEP_TIME:-180}"
 sleep ${SLEEP_TIME}
 
 
