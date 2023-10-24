@@ -11,7 +11,7 @@
     "body-parser": "*",
     "express": "^4.17.3",
     "mongoose": "^4.13.21",
-    "npm": "^5.8.0",
+    "npm": "^10.2.1",
     "update": "^0.7.4"
   },
   "author": "Brad Traversy",
